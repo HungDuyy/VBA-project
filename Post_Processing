@@ -1,0 +1,604 @@
+Function FolderCreate(ByVal path As String) As Boolean
+
+FolderCreate = True
+Set fso = CreateObject("Scripting.FileSystemObject")
+
+If FolderExists(path) Then
+    Exit Function
+Else
+    On Error GoTo DeadInTheWater
+    fso.CreateFolder path ' could there be any error with this, like if the path is really screwed up?
+    Exit Function
+End If
+
+DeadInTheWater:
+    MsgBox "A folder could not be created for the following path: " & path & ". Check the path name and try again."
+    FolderCreate = False
+    Exit Function
+
+End Function
+
+Function FolderExists(ByVal path As String) As Boolean
+
+FolderExists = False
+Set fso = CreateObject("Scripting.FileSystemObject")
+
+If fso.FolderExists(path) Then FolderExists = True
+
+End Function
+Function SelecFolder() As String
+    Dim intResult As Integer
+    Dim strPath As String
+    Application.FileDialog(msoFileDialogOpen).AllowMultiSelect = False
+    'the dialog is displayed to the user
+    intResult = Application.FileDialog(msoFileDialogOpen).Show
+    'checks if user has cancled the dialog
+    If intResult <> 0 Then
+        'dispaly message box
+        strPath = Application.FileDialog( _
+        msoFileDialogOpen).SelectedItems(1)
+        SelecFolder = strPath
+    End If
+End Function
+Private Sub Select_Input_Click()
+Dim sFolder As String
+Dim strPath As String
+Application.FileDialog(msoFileDialogOpen).AllowMultiSelect = False
+    ' Open the select folder prompt
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        If .Show = -1 Then ' if OK is pressed
+            sFolder = .SelectedItems(1)
+        End If
+    End With
+    
+    If sFolder <> "" Then ' if a file was chosen
+        ' *********************
+        ' put your code in here
+        strPath = Application.FileDialog( _
+        msoFileDialogFolderPicker).SelectedItems(1)
+        TextBox1.Value = strPath
+        ' *********************
+    End If
+End Sub
+Private Sub Select_SEDGE_Click()
+Dim sFolder As String
+Dim strPath As String
+Application.FileDialog(msoFileDialogOpen).AllowMultiSelect = False
+    ' Open the select folder prompt
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        If .Show = -1 Then ' if OK is pressed
+            sFolder = .SelectedItems(1)
+        End If
+    End With
+    
+    If sFolder <> "" Then ' if a file was chosen
+        ' *********************
+        ' put your code in here
+        strPath = Application.FileDialog( _
+        msoFileDialogFolderPicker).SelectedItems(1)
+        TextBox2.Value = strPath
+        ' *********************
+    End If
+End Sub
+Private Sub ARRANGE_Click()
+Dim result, fcnameUpcase, temp, path_doc, path_mod, path_src, path_misc, path_isola, fctype, namerevision, inputpatch, datapatch, outputPath, fcname As String
+Dim MyFileSysObj, MySource As Object, file As Variant
+
+Dim PathZipProgram As String, NameZipFile, FolderName As String
+Dim ShellStr As String
+
+Set MyFileSysObj = CreateObject("scripting.filesystemobject")
+
+inputpatch = TextBox1.Value
+If Len(inputpatch) > 120 Then
+    MsgBox "Please choose DATA folder path < 120 character, current path is " & Len(inputpatch) & " characters", vbCritical
+    Exit Sub
+End If
+If MyFileSysObj.FolderExists(inputpatch) = True Then
+Else
+    MsgBox "INPUT folder not found !", vbCritical
+    Exit Sub
+End If
+
+fcname = Right(inputpatch, Len(inputpatch) - InStrRev(inputpatch, "\"))
+fcnameUpcase = fcname
+fcname = LCase(fcname)
+namerevision = fcname
+If InStrRev(fcname, "wspsa") <> 0 Then
+    fcname = Left(fcname, InStrRev(fcname, "wspsa") + 4)
+    fcnameUpcase = Left(fcnameUpcase, InStrRev(fcnameUpcase, "wSPSA") + 4)
+ElseIf InStrRev(fcname, "wslyr") <> 0 Then 'SwSAPSA_CSwSLyr
+    fcname = Left(fcname, InStrRev(fcname, "wslyr") + 4)
+    fcnameUpcase = Left(fcnameUpcase, InStrRev(fcnameUpcase, "wSLyr") + 4)
+ElseIf InStrRev(fcname, "psa") <> 0 Then
+    fcname = Left(fcname, InStrRev(fcname, "psa") + 2)
+    fcnameUpcase = Left(fcnameUpcase, InStrRev(fcnameUpcase, "PSA") + 2)
+Else
+    MsgBox ("Strange FC name!"), vbCritical
+    Exit Sub
+End If
+
+fctype = Right(fcname, Len(fcname) - InStrRev(fcname, "_"))
+'sFilename = Left(sFullFilename, (InStr(sFullFilename, ".") - 1))
+
+outputPath = inputpatch + "\" + namerevision + "_dev"
+
+path_doc = outputPath + "\_doc"
+path_mod = outputPath + "\_mod"
+path_src = outputPath + "\_src"
+path_misc = path_src + "\_misc"
+path_isola = outputPath + "\i\"
+
+    If FolderExists(outputPath) = True Then
+        'MsgBox "Please manual delete last folder output first", vbCritical
+        'Exit Sub
+    Else
+        MyFileSysObj.CreateFolder (outputPath)
+    End If
+
+    If FolderExists(path_doc) = True Then
+        If Dir(path_doc & "\*.*") <> "" Then
+            Kill path_doc & "\*.*"
+        End If
+    Else
+        MyFileSysObj.CreateFolder (path_doc)
+    End If
+    
+    If FolderExists(path_mod) = True Then
+        If Dir(path_mod & "\*.*") <> "" Then
+            Kill path_mod & "\*.*"
+        End If
+    Else
+        MyFileSysObj.CreateFolder (path_mod)
+    End If
+    
+    If FolderExists(path_src) = True Then
+        If Dir(path_src & "\*.*") <> "" Then
+            Kill path_src & "\*.*"
+        End If
+    Else
+        MyFileSysObj.CreateFolder (path_src)
+    End If
+    
+    
+    If FolderExists(path_misc) = True Then
+        If Dir(path_misc & "\*.*") <> "" Then
+            Kill path_misc & "\*.*"
+        End If
+    Else
+        MyFileSysObj.CreateFolder (path_misc)
+    End If
+    
+    If FolderExists(path_isola) = True Then
+        path_isola = path_isola + fcname + "_isolar"
+        If FolderExists(path_isola) = True Then
+            If Dir(path_isola & "\*.*") <> "" Then
+                Kill path_isola & "\*.*"
+            End If
+        End If
+    Else
+        MyFileSysObj.CreateFolder (path_isola)
+        path_isola = path_isola + fcname + "_isolar"
+        MyFileSysObj.CreateFolder (path_isola)
+    End If
+
+If (fctype = "swspsa") Then
+ElseIf (fctype = "cswspsa") Then
+ElseIf (fctype = "swslyr") Then
+ElseIf (fctype = "cswslyr") Then
+ElseIf (fctype = "cswslyr") Then
+ElseIf (fctype = "psa") Then
+Else
+    MsgBox "Type of FC isn't available (not Complex or Simple), Please check again", vbCritical
+    Exit Sub
+End If
+
+    '___________________doc_____________________________________________________________________
+    
+    temp = Dir(inputpatch + "\*.axl")
+    If temp = "" Then
+        result = vbCrLf & fcname & ".axl"
+    Else
+     MyFileSysObj.CopyFile inputpatch + "\*.axl", path_doc
+    End If
+    
+    temp = Dir(inputpatch + "\*_specpavast.xml")
+    
+    If temp = "" Then
+        result = result & vbCrLf & fcname + "_specpavast.xml"
+    Else
+     MyFileSysObj.CopyFile inputpatch + "\*_specpavast.xml", path_doc
+    End If
+    
+    
+    temp = Dir(inputpatch + "\*_fs.xml")
+    
+    If temp = "" Then
+        result = result & vbCrLf & fcname + "_fs.xml"
+    Else
+     MyFileSysObj.CopyFile inputpatch + "\*_fs.xml", path_doc
+    End If
+    
+     '________________mod_______________________________________________________________________
+    temp = Dir(inputpatch + "\*.prj")
+    
+    If temp = "" Then
+        result = result & vbCrLf & fcnameUpcase + ".prj"
+    Else
+     MyFileSysObj.CopyFile inputpatch + "\*.prj", path_mod
+    End If
+     '______________src_________________________________________________________________________
+    temp = Dir(inputpatch + "\" + fcname + ".xls*")
+    
+    If temp = "" Then
+        result = result & vbCrLf & fcname & ".xls"
+    Else
+     MyFileSysObj.CopyFile inputpatch + "\" + fcname + ".xls*", path_misc
+    End If
+    
+    temp = Dir(inputpatch + "\" + fcnameUpcase + ".arxml")
+    
+    If temp = "" Then
+        result = result & vbCrLf & fcname & ".arxml"
+    Else
+        MyFileSysObj.CopyFile inputpatch + "\*" + fcnameUpcase + ".arxml", path_isola
+        temp = Dir(path_isola + "\*" + fcnameUpcase + ".arxml")
+        Name path_isola + "\" + temp As path_isola + "\" + fcname + "_swascet.arxml"
+    End If
+    
+    temp = Dir(inputpatch + "\CodeGeneration.log")
+    
+    If temp = "" Then
+        temp = Dir(inputpatch + "\*_w.log")
+    End If
+    
+    If temp = "" Then
+        result = result & vbCrLf & "CodeGeneration.log"
+    ElseIf temp = "CodeGeneration.log" Then
+        MyFileSysObj.CopyFile inputpatch + "\*CodeGeneration.log", path_src
+        temp = Dir(path_src + "\CodeGeneration.log")
+        Name path_src + "\" + temp As path_src + "\" + fcname + "_w.log"
+    Else
+        MyFileSysObj.CopyFile inputpatch + "\*_w.log", path_src
+        temp = Dir(path_src + "\*_w.log")
+        Name path_src + "\" + temp As path_src + "\" + fcname + "_w.log"
+    End If
+    
+    '========================== file ARXML 4x before add data constrain
+    temp = Dir(inputpatch + "\vm_output\*" + fcnameUpcase + ".arxml")
+    If temp = "" Then
+        result = result & vbCrLf & "ARXML 4x before add Dataconstrains"
+    Else
+        MyFileSysObj.CopyFile inputpatch + "\vm_output\*" + fcnameUpcase + ".arxml", path_isola 'ARXML
+    End If
+    
+    '========================== file ARXML after data constrain
+    temp = Dir(inputpatch + "\vm_output\*" + fcnameUpcase + "_*_*.arxml")
+
+    If temp = "" Then
+        result = result & vbCrLf & "ARXML 4x with Dataconstrains"
+    Else
+        i = Len(temp)
+        Set MySource = MyFileSysObj.GetFolder(inputpatch + "\vm_output\")
+        For Each file In MySource.files
+        If InStr(file.Name, "arxml") > 0 Then
+            If Len(file.Name) >= i Then
+                i = Len(file.Name)
+                temp = Right(file, Len(file) - InStrRev(file, "\"))
+            End If
+        End If
+        Next file
+    
+        MyFileSysObj.CopyFile inputpatch + "\vm_output\*" + temp, path_src
+    
+        temp = Dir(path_src + "\" + fcnameUpcase + "_*.arxml")
+  
+        Name path_src + "\" + temp As path_src + "\" + fcname + ".arxml"
+    End If
+    '=======================================================copy 4x files =================================================================
+    Set MySource = MyFileSysObj.GetFolder(inputpatch + "\vm_output\")
+    temp = "nothing"
+    Dim subfolder
+        For Each subfolder In MySource.SubFolders
+            If InStr(subfolder.Name, "4x") > 0 Then
+                temp = subfolder.Name
+            End If
+        Next
+    If (FolderExists(inputpatch & "\vm_output\" & temp) = True) Then
+        MyFileSysObj.CopyFile inputpatch + "\vm_output\" & temp & "\*.arxml", path_isola
+        temp = Dir(path_isola + "\ISOLAR_DataConstr.arxml")
+        Name path_isola + "\" + temp As path_isola + "\" + fcname + "_dataconstr.arxml"
+        temp = Dir(path_isola + "\ISOLAR_ImplementationTypes.arxml")
+        Name path_isola + "\" + temp As path_isola + "\" + fcname + "_implementationtypes.arxml"
+        temp = Dir(path_isola + "\ISOLAR_PlatformTypes.arxml")
+        Name path_isola + "\" + temp As path_isola + "\" + fcname + "_platformtypes.arxml"
+        
+        PathZipProgram = "C:\program files\7-Zip\"
+        If Right(PathZipProgram, 1) <> "\" Then
+            PathZipProgram = PathZipProgram & "\"
+        End If
+    
+        'Check if this is the path where 7z is installed.
+        If Dir(PathZipProgram & "7z.exe") = "" Then
+            MsgBox "Can't find 7z.exe from 'C:\program files\7-Zip\' - Please check again", vbCritical
+            Exit Sub
+        End If
+    
+        NameZipFile = path_misc & "\" & fcname + "_isolar.zip"
+     
+        
+        FolderName = outputPath + "\i\"
+        
+        'Zip all the files in the folder and subfolders, -r is Include subfolders
+        ShellStr = PathZipProgram & "7z.exe a -r" _
+                 & " " & Chr(34) & NameZipFile & Chr(34) _
+                 & " " & Chr(34) & FolderName & "*.*" & Chr(34)
+                 
+        ShellAndWait ShellStr, vbNormalFocus
+    
+        MyFileSysObj.DeleteFolder outputPath + "\i", True
+        While (MyFileSysObj.FolderExists(outputPath + "\i") = True)
+        Wend
+    
+    
+    Else
+        MyFileSysObj.CopyFolder outputPath + "\i\*", path_misc & "\", True
+        MyFileSysObj.DeleteFolder outputPath + "\i", True
+
+        result = result & vbCrLf & "3 ISOLAR files (4x folder not available)"
+    End If
+    
+    '======================================== copy .h .c
+    temp = Dir(inputpatch + "\*" + fcnameUpcase + ".h")
+    
+    If temp = "" Then
+    Else
+        MyFileSysObj.CopyFile inputpatch + "\*" + fcnameUpcase + ".h", path_src
+    End If
+    
+    
+    temp = Dir(inputpatch + "\" + fcnameUpcase + ".c")
+    
+    If temp = "" Then
+        result = result & vbCrLf & fcnameUpcase + ".c"
+    Else
+        MyFileSysObj.CopyFile inputpatch + "\*" + fcnameUpcase + ".c", path_src
+    End If
+    
+    temp = Dir(inputpatch + "\*" + fcnameUpcase + "_PROT_ConfData.xml")
+    
+    If temp = "" Then
+        result = result & vbCrLf & fcnameUpcase + "_PROT_ConfData.xml"
+    Else
+        MyFileSysObj.CopyFile inputpatch + "\*" + fcnameUpcase + "_PROT_ConfData.xml", path_src
+    End If
+    
+    temp = Dir(inputpatch + "\*" + fcnameUpcase + "_pavast.xml_new")
+    If temp = "" Then
+        result = result & vbCrLf & fcnameUpcase + "_pavast.xml_new"
+    Else
+        MyFileSysObj.CopyFile inputpatch + "\*" + fcnameUpcase + "_pavast.xml_new", path_src
+        temp = Dir(path_src + "\*pavast.xml_new")
+        Name path_src + "\" + temp As path_src + "\" + fcname + "_pavast.xml"
+    End If
+  
+     '_______________________________________________________________________________________
+     If result = "" Then
+        MsgBox "Success! find result at:" & vbCrLf & vbCrLf & outputPath, vbInformation
+    Else
+       MsgBox "Done - Something are missing:" & vbCrLf & result, vbCritical
+    End If
+
+End Sub
+Private Sub step1_Click()
+Dim result, status, batch, fcname, temp, inputpath, program, argu, fspath, datapath, path As String
+Dim MyFileSysObj, wsh As Object
+Set MyFileSysObj = CreateObject("scripting.filesystemobject")
+Set wsh = VBA.CreateObject("WScript.Shell")
+
+inputpatch = TextBox1.Value + "\"
+
+If Len(inputpatch) > 120 Then
+    MsgBox "Please choose DATA folder path < 120 character, current path is " & Len(inputpatch) & " characters", vbCritical
+    Exit Sub
+End If
+If MyFileSysObj.FolderExists(inputpatch) = True Then
+Else
+    MsgBox "INPUT folder not found !", vbCritical
+    Exit Sub
+End If
+
+path = Application.ActiveWorkbook.path
+datapath = path & "\data\"
+fspath = datapath & "fs_templet\"
+
+
+fcname = Right(TextBox1.Value, Len(TextBox1.Value) - InStrRev(TextBox1.Value, "\"))
+
+'If InStrRev(fcname, "wSLyr") <> 0 Then
+'    fcname = Left(fcname, InStrRev(fcname, "wSLyr") + 4)
+'Else
+'fcname = Left(fcname, InStrRev(fcname, "wSPSA") + 4)
+'End If
+If InStrRev(fcname, "wSPSA") <> 0 Then
+    fcname = Left(fcname, InStrRev(fcname, "wSPSA") + 4)
+ElseIf InStrRev(fcname, "wSLyr") <> 0 Then 'SwSAPSA_CSwSLyr
+    fcname = Left(fcname, InStrRev(fcname, "wSLyr") + 4)
+ElseIf InStrRev(fcname, "PSA") <> 0 Then
+    fcname = Left(fcname, InStrRev(fcname, "PSA") + 2)
+Else
+    MsgBox ("Strange FC name! Please choose another name"), vbCritical
+    Exit Sub
+End If
+
+'Shell ThisWorkbook.path & "\data\MakeConfData.bat", vbNormalFocus
+'Shell ThisWorkbook.path & "\data\PavastVsFs.exe", vbNormalFocus
+
+    temp = Dir(inputpatch + "*.c")
+    If temp = "" Then
+        status = vbCrLf & "file.c"
+    End If
+    
+    temp = Dir(inputpatch + "*_pavast.xml")
+    If temp = "" Then
+        status = status & vbCrLf & fcname & "_pavast.xml"
+    End If
+    
+    temp = Dir(inputpatch + fcname + ".arxml")
+    If temp = "" Then
+        status = status & vbCrLf & fcname & ".arxml"
+    End If
+    
+    If OPL = True Or Qvalid = True Then
+        temp = Dir(inputpatch + LCase(fcname) + ".xls*")
+        If temp = "" Then
+            status = status & vbCrLf & LCase(fcname) + ".xls for OPL-Check & Q-Validator"
+        End If
+    End If
+    
+    If status = "" Then
+    Else
+        MsgBox "Missing files: " & status, vbCritical
+        Exit Sub
+    End If
+
+    result = "Below contents available in DATA foler:"
+'If (FolderExists(inputpatch & "vm_input") = True) Then
+   'MsgBox " 'vm_input' already available in this folder" & vbCrLf & vbCrLf & "Delete 'vm_folder' before run again", vbCritical
+'Else
+  'MkDir (inputpatch + "vm_output")
+  'MyFileSysObj.CopyFile datapath + "makeConfData_Local.bat", inputpatch
+  
+    If OPL = True Then
+        Docmisc_OPL_checker_Click (fcname)
+        result = result & vbCrLf & fcname & "_DOCMISC_OPL_Check.xls"
+    End If
+  
+    If Qvalid = True Then
+        MyFileSysObj.CopyFolder datapath + "Q-validator", inputpatch, True
+        wsh.CurrentDirectory = inputpatch + "Q-validator"
+        program = datapath + "Q-validator\Qvalid_Consonle_Current.jar"
+        wsh.Run "java -jar " & Chr(34) & program & Chr(34), vbNormalFocus, True
+        wsh.CurrentDirectory = inputpatch
+        MyFileSysObj.DeleteFolder inputpatch + "Q-validator", True
+        
+        temp = Dir(inputpatch + "\Q-Validator_log\" + "*.xls*")
+        If temp <> "" Then
+                MyFileSysObj.CopyFile inputpatch + "\Q-Validator_log\" + "*.xls*", inputpatch, True
+                result = result & vbCrLf & fcname & "_QValidator_Report.xls, please check 'Q-Validator_log' to see more"
+        Else
+            MsgBox ("Can't generate Q-Validator report, maybe due to strange FC name. Check 'Q-Validator_log' to see more"), vbCritical
+        End If
+        
+        temp = Dir("C:\temp\WarningsAndErrors.log")
+            If temp <> "" Then
+                    If FolderExists(inputpatch + "\Q-Validator_log") = False Then
+                        MkDir inputpatch + "\Q-Validator_log"
+                    End If
+                    MyFileSysObj.CopyFile "C:\temp\WarningsAndErrors.log", inputpatch + "\Q-Validator_log\", True
+            End If
+    End If
+  
+    If RemoveRB = True Then
+        'MyFileSysObj.CopyFile datapath + "removerb_all.exe", inputpatch, True
+        wsh.CurrentDirectory = inputpatch
+        wsh.Run datapath + "removerb_all.exe", vbNormalFocus, True
+        'Application.Wait (Now + TimeValue("0:00:01"))
+        'MyFileSysObj.DeleteFile inputpatch & "removerb_all.exe", True
+        result = result & vbCrLf & "'_rb' was removed for Pavast & .C files"
+    End If
+  
+    If vmfolder = True Then
+        MyFileSysObj.CopyFolder datapath + "vm_input", inputpatch, True
+        MyFileSysObj.CopyFolder datapath + "vm_output", inputpatch, True
+        MyFileSysObj.CopyFile inputpatch + "*" + fcname + ".arxml", inputpatch + "vm_input"
+        result = result & vbCrLf & "vm_input, vm_output"
+    End If
+    
+    If PROT = True Then
+            'MyFileSysObj.CopyFile datapath + "makeConfData.bat", inputpatch, True
+            'MyFileSysObj.CopyFile datapath + "makeConfData.exe", inputpatch, True
+            'wsh.Run inputpatch & "makeConfData.bat", vbNormalFocus, True
+            'Application.Wait (Now + TimeValue("0:00:01"))
+            'MyFileSysObj.DeleteFile (inputpatch & "makeConfData.bat"), True
+            'MyFileSysObj.DeleteFile (inputpatch & "makeConfData.exe"), True
+            
+            'MyFileSysObj.CopyFile datapath + "makeConfData.exe", inputpatch
+            wsh.CurrentDirectory = inputpatch
+            wsh.Run datapath + "makeConfData.exe", vbNormalFocus, True
+            'Application.Wait (Now + TimeValue("0:00:01"))
+            'MyFileSysObj.DeleteFile (inputpatch & "makeConfData.exe"), True
+            result = result & vbCrLf & fcname & "_PROT_ConfData.xml"
+    End If
+  
+    If Stand = True Then
+            'MyFileSysObj.CopyFile datapath + "STANDARD2PROCESS.exe", inputpatch, True
+            program = datapath + "STANDARD2PROCESS.exe"
+            argu = TextBox1.Value
+            wsh.CurrentDirectory = inputpatch
+            wsh.Run """" & program & """ """ & argu & """", vbNormalFocus, True
+            'Application.Wait (Now + TimeValue("0:00:01"))
+            'MyFileSysObj.DeleteFile inputpatch & "STANDARD2PROCESS.exe", True
+            result = result & vbCrLf & fcname & "_pavast.xml_new"
+    End If
+        
+    MyFileSysObj.CopyFile datapath + "PavastVsFs.exe", inputpatch
+  
+    result = result & vbCrLf & "PavastVsFs.exe"
+    
+    temp = Dir(fspath + LCase(fcname) + "_fs.xml")
+    If temp <> "" Then
+                MyFileSysObj.CopyFile fspath + LCase(fcname) + "_fs.xml", inputpatch + LCase(fcname) + "_fs.xml_templet", True
+                result = result & vbCrLf & LCase(fcname) & "_fs.xml_templet - Please manual rename and add model images"
+    End If
+  
+    MsgBox result, vbInformation
+
+End Sub
+Public Sub Docmisc_OPL_checker_Click(fcname As String)
+Dim docmiscName As String
+Dim custom_variable, rte_direction, bosch_variable, proc_nam, OPL_check As String
+Dim Custom_Primitivetype, Custom_Conversion_formula, RB_Datatype, RB_Conversion_formula As String
+Dim status As String
+
+'docmiscName = Dir(TextBox1.Value)
+docmiscName = TextBox1.Value + "\" + LCase(fcname) + ".xls"
+'docmiscName = Dir(docmiscName)
+'Do While filename <> ""
+Workbooks.Open (docmiscName)
+'Workbooks(filename).Close
+'Workbooks(filename).Worksheets.Add
+docmiscName = Dir(docmiscName)
+Workbooks(docmiscName).Worksheets.Add
+
+status = copy_column("Status", 1, docmiscName)
+custom_variable = copy_column("Variable Name", 2, docmiscName)
+Custom_Primitivetype = copy_column("Primitivetype", 3, docmiscName)
+Custom_Conversion_formula = copy_column("Conversion formula", 4, docmiscName)
+rte_direction = copy_column("Rte Direction", 5, docmiscName)
+bosch_variable = copy_column("Element Name", 6, docmiscName)
+RB_Datatype = copy_column("RB Datatype", 7, docmiscName)
+RB_Conversion_formula = copy_column("RB Conversion formula", 8, docmiscName)
+proc_nam = copy_column("Process name", 9, docmiscName)
+Workbooks(docmiscName).Worksheets(1).Range("J2").Value = "Check for Proc name"
+Workbooks(docmiscName).Worksheets(1).Range("J2").Borders.LineStyle = xlContinuous
+
+
+OPL_check = OPL_check_proc_name(docmiscName)
+
+' check for formular
+Workbooks(docmiscName).Worksheets(1).Range("K2").Value = "Check for BTRUE Formular"
+Workbooks(docmiscName).Worksheets(1).Range("K2").Borders.LineStyle = xlContinuous
+Dim Customer_formular, Bosch_formular As String
+Customer_formular = Customer_formular_check(docmiscName)
+Bosch_formular = Bosch_formular_check(docmiscName)
+
+' Bold and select all bolder for 3rd row
+Workbooks(docmiscName).Worksheets(1).Range("A2:K2").Font.Bold = True
+Workbooks(docmiscName).Worksheets(1).Range("A2:K2").Interior.ColorIndex = 8
+Workbooks(docmiscName).Worksheets(1).Columns(10).AutoFit
+Workbooks(docmiscName).Worksheets(1).Columns(11).AutoFit
+Application.ScreenUpdating = False
+Workbooks(docmiscName).Close True, TextBox1.Value + "\" + fcname + "_DOCMISC_OPL_Check.xls"
+Application.ScreenUpdating = True
+End Sub
